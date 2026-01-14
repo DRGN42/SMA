@@ -9,6 +9,10 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 
+SKIP_TITLE_CANDIDATES = {
+    "Gedichtsammlung",
+}
+
 
 @dataclass(frozen=True)
 class ParsedPoem:
@@ -38,10 +42,14 @@ def parse_poem_html(html_path: Path) -> ParsedPoem:
     title_bold = soup.find("p")
     for p in soup.find_all("p"):
         bold = p.find("b")
-        if bold:
-            title = bold.get_text(strip=True) or title
-            title_bold = p
-            break
+        if not bold:
+            continue
+        candidate = bold.get_text(strip=True)
+        if not candidate or candidate in SKIP_TITLE_CANDIDATES:
+            continue
+        title = candidate or title
+        title_bold = p
+        break
 
     poem_lines: list[str] = []
     if title_bold:
