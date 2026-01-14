@@ -62,6 +62,8 @@ Generate TTS with a cached reference voice (poemvoice.wav):
 python scripts/run_tts.py data/raw/<file>.chunked.json --mode local --device cuda --ref-audio-path higgs-audio/examples/voice_prompts/poemvoice.wav
 ```
 
+The cached reference voice is stored at `data/cache/ref_audio.wav` by default.
+
 Generate images per chunk with ComfyUI (Flux workflow):
 
 ```bash
