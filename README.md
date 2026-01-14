@@ -50,10 +50,22 @@ Generate TTS audio per chunk (Higgs v2-compatible endpoint):
 python scripts/run_tts.py data/raw/<file>.chunked.json --endpoint http://localhost:8002/v1/tts --voice poetry_female_01
 ```
 
+Generate TTS audio per chunk (Higgs v2 local mode):
+
+```bash
+python scripts/run_tts.py data/raw/<file>.chunked.json --mode local --device cuda
+```
+
 Generate images per chunk with ComfyUI (Flux workflow):
 
 ```bash
 python scripts/run_image.py data/raw/<file>.llm_response.parsed.json --workflow workflows/flux.json --endpoint http://localhost:8188
+```
+
+Prepare video assembly assets (concat lists + subtitles):
+
+```bash
+python scripts/run_video.py data/raw/<file>.chunked.json data/images/<file>.images.json data/audio/<file>.tts.json
 ```
 
 ## Project structure
@@ -63,11 +75,12 @@ python scripts/run_image.py data/raw/<file>.llm_response.parsed.json --workflow 
 ├── data/
 │   ├── audio/        # TTS audio outputs
 │   ├── images/       # Image outputs
-│   └── raw/          # Raw HTML + fetch metadata
+│   ├── raw/          # Raw HTML + fetch metadata
+│   └── video/        # Video assembly assets
 ├── scripts/          # Local CLI scripts, called by n8n
 └── requirements.txt
 ```
 
 ## Next module
 
-The next module will assemble images + audio into a video with subtitles and background music.
+The next module will automate ffmpeg execution and add background music.
