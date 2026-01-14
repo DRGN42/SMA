@@ -38,6 +38,12 @@ Run the LLM request (OpenAI-compatible endpoint):
 python scripts/run_llm.py data/raw/<file>.llm.json --endpoint http://localhost:8000/v1/chat/completions --model openai/gpt-oss-20b
 ```
 
+Parse the LLM response into structured prompts:
+
+```bash
+python scripts/parse_llm_response.py data/raw/<file>.llm_response.json
+```
+
 ## Project structure
 
 ```
@@ -50,4 +56,4 @@ python scripts/run_llm.py data/raw/<file>.llm.json --endpoint http://localhost:8
 
 ## Next module
 
-The next module will parse the LLM response into a structured JSON for image + TTS generation.
+The next module will generate TTS audio per chunk using the structured prompts.
