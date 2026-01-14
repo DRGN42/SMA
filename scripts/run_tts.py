@@ -25,6 +25,8 @@ class TTSConfig:
     model_path: str
     tokenizer_path: str
     device: str
+    ref_audio_path: str | None
+    ref_audio_cache: str | None
 
 
 def request_tts_http(text: str, config: TTSConfig) -> bytes:
@@ -48,6 +50,38 @@ def request_tts_http(text: str, config: TTSConfig) -> bytes:
     return response.content
 
 
+def load_reference_audio(config: TTSConfig) -> "AudioContent | None":
+    if not config.ref_audio_path:
+        return None
+
+    import torch
+    import torchaudio
+
+    from boson_multimodal.data_types import AudioContent
+
+    ref_path = Path(config.ref_audio_path)
+    if not ref_path.exists():
+        raise FileNotFoundError(f"Reference audio not found: {ref_path}")
+
+    if config.ref_audio_cache:
+        cache_path = Path(config.ref_audio_cache)
+        if cache_path.exists():
+            payload = torch.load(cache_path, weights_only=False)
+            return AudioContent(audio=payload["audio"], sampling_rate=payload["sample_rate"])
+
+    audio, sample_rate = torchaudio.load(str(ref_path))
+    if sample_rate != config.sample_rate:
+        audio = torchaudio.functional.resample(audio, sample_rate, config.sample_rate)
+        sample_rate = config.sample_rate
+
+    if config.ref_audio_cache:
+        cache_path = Path(config.ref_audio_cache)
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        torch.save({"audio": audio, "sample_rate": sample_rate}, cache_path)
+
+    return AudioContent(audio=audio, sampling_rate=sample_rate)
+
+
 def request_tts_local(text: str, config: TTSConfig) -> tuple["torch.Tensor", int]:
     import torch
     import torchaudio
@@ -62,8 +96,13 @@ def request_tts_local(text: str, config: TTSConfig) -> tuple["torch.Tensor", int
         "<|scene_desc_end|>"
     )
 
+    ref_audio = load_reference_audio(config)
+    system_content: list = [system_prompt]
+    if ref_audio:
+        system_content.insert(0, ref_audio)
+
     messages = [
-        Message(role="system", content=system_prompt),
+        Message(role="system", content=system_content if ref_audio else system_prompt),
         Message(role="user", content=text),
     ]
 
@@ -107,6 +146,8 @@ def build_manifest(
         "model_path": config.model_path,
         "tokenizer_path": config.tokenizer_path,
         "device": config.device,
+        "ref_audio_path": config.ref_audio_path,
+        "ref_audio_cache": config.ref_audio_cache,
         "audio_files": audio_files,
     }
 
@@ -164,6 +205,16 @@ def parse_args() -> argparse.Namespace:
         help="Device for local mode (cuda or cpu)",
     )
     parser.add_argument(
+        "--ref-audio-path",
+        default=os.environ.get("HIGGS_REF_AUDIO"),
+        help="Reference voice audio path for local mode (wav)",
+    )
+    parser.add_argument(
+        "--ref-audio-cache",
+        default=os.environ.get("HIGGS_REF_CACHE", "data/cache/ref_audio.pt"),
+        help="Cache path for reference audio tensor (local mode)",
+    )
+    parser.add_argument(
         "--output",
         help="Optional manifest JSON path",
     )
@@ -188,6 +239,8 @@ def main() -> None:
         model_path=args.model_path,
         tokenizer_path=args.tokenizer_path,
         device=args.device,
+        ref_audio_path=args.ref_audio_path,
+        ref_audio_cache=args.ref_audio_cache,
     )
 
     audio_files: list[dict[str, Any]] = []

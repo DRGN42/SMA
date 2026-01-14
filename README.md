@@ -56,6 +56,12 @@ Generate TTS audio per chunk (Higgs v2 local mode):
 python scripts/run_tts.py data/raw/<file>.chunked.json --mode local --device cuda
 ```
 
+Generate TTS with a cached reference voice (poemvoice.wav):
+
+```bash
+python scripts/run_tts.py data/raw/<file>.chunked.json --mode local --device cuda --ref-audio-path higgs-audio/examples/voice_prompts/poemvoice.wav
+```
+
 Generate images per chunk with ComfyUI (Flux workflow):
 
 ```bash
