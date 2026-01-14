@@ -44,11 +44,18 @@ Parse the LLM response into structured prompts:
 python scripts/parse_llm_response.py data/raw/<file>.llm_response.json
 ```
 
+Generate TTS audio per chunk (Higgs v2-compatible endpoint):
+
+```bash
+python scripts/run_tts.py data/raw/<file>.chunked.json --endpoint http://localhost:8002/v1/tts --voice poetry_female_01
+```
+
 ## Project structure
 
 ```
 .
 ├── data/
+│   ├── audio/        # TTS audio outputs
 │   └── raw/          # Raw HTML + fetch metadata
 ├── scripts/          # Local CLI scripts, called by n8n
 └── requirements.txt
@@ -56,4 +63,4 @@ python scripts/parse_llm_response.py data/raw/<file>.llm_response.json
 
 ## Next module
 
-The next module will generate TTS audio per chunk using the structured prompts.
+The next module will generate images per chunk using the prompts from the LLM response.
