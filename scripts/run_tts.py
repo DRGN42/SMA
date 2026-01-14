@@ -67,7 +67,11 @@ def load_reference_audio(config: TTSConfig) -> "AudioContent | None":
         cache_path = Path(config.ref_audio_cache)
         if cache_path.exists():
             payload = torch.load(cache_path, weights_only=False)
-            return AudioContent(audio=payload["audio"], sampling_rate=payload["sample_rate"])
+            audio = payload.get("audio") or payload.get("waveform")
+            sample_rate = payload.get("sample_rate") or payload.get("sampling_rate")
+            if audio is None or sample_rate is None:
+                raise ValueError("Reference audio cache missing audio data")
+            return build_audio_content(AudioContent, audio, sample_rate)
 
     audio, sample_rate = torchaudio.load(str(ref_path))
     if sample_rate != config.sample_rate:
@@ -79,7 +83,25 @@ def load_reference_audio(config: TTSConfig) -> "AudioContent | None":
         cache_path.parent.mkdir(parents=True, exist_ok=True)
         torch.save({"audio": audio, "sample_rate": sample_rate}, cache_path)
 
-    return AudioContent(audio=audio, sampling_rate=sample_rate)
+    return build_audio_content(AudioContent, audio, sample_rate)
+
+
+def build_audio_content(audio_cls: type, audio: "torch.Tensor", sample_rate: int) -> "AudioContent":
+    kwargs_list = [
+        {"audio": audio, "sampling_rate": sample_rate},
+        {"audio": audio, "sample_rate": sample_rate},
+        {"waveform": audio, "sampling_rate": sample_rate},
+        {"waveform": audio, "sample_rate": sample_rate},
+    ]
+    for kwargs in kwargs_list:
+        try:
+            return audio_cls(**kwargs)
+        except TypeError:
+            continue
+    try:
+        return audio_cls(audio, sample_rate)
+    except TypeError as exc:
+        raise TypeError("Unsupported AudioContent signature") from exc
 
 
 def request_tts_local(text: str, config: TTSConfig) -> tuple["torch.Tensor", int]:
