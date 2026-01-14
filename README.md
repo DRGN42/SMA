@@ -20,6 +20,18 @@ Parse a single HTML file into normalized JSON:
 python scripts/parse_poem.py data/raw/<file>.html
 ```
 
+Chunk the parsed poem into line groups:
+
+```bash
+python scripts/chunk_poem.py data/raw/<file>.json --lines-per-chunk 2
+```
+
+Build an LLM prompt payload for atmosphere + per-chunk image prompts:
+
+```bash
+python scripts/build_llm_payload.py data/raw/<file>.chunked.json
+```
+
 ## Project structure
 
 ```
@@ -32,4 +44,4 @@ python scripts/parse_poem.py data/raw/<file>.html
 
 ## Next module
 
-The next module will chunk poem lines for TTS + image prompt generation.
+The next module will call the LLM with the payload and store the structured response.
