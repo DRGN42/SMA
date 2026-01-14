@@ -50,12 +50,19 @@ Generate TTS audio per chunk (Higgs v2-compatible endpoint):
 python scripts/run_tts.py data/raw/<file>.chunked.json --endpoint http://localhost:8002/v1/tts --voice poetry_female_01
 ```
 
+Generate images per chunk with ComfyUI (Flux workflow):
+
+```bash
+python scripts/run_image.py data/raw/<file>.llm_response.parsed.json --workflow workflows/flux.json --endpoint http://localhost:8188
+```
+
 ## Project structure
 
 ```
 .
 ├── data/
 │   ├── audio/        # TTS audio outputs
+│   ├── images/       # Image outputs
 │   └── raw/          # Raw HTML + fetch metadata
 ├── scripts/          # Local CLI scripts, called by n8n
 └── requirements.txt
@@ -63,4 +70,4 @@ python scripts/run_tts.py data/raw/<file>.chunked.json --endpoint http://localho
 
 ## Next module
 
-The next module will generate images per chunk using the prompts from the LLM response.
+The next module will assemble images + audio into a video with subtitles and background music.
