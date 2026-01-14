@@ -64,6 +64,51 @@ python scripts/run_tts.py data/raw/<file>.chunked.json --mode local --device cud
 
 The cached reference voice is stored at `data/cache/ref_audio.wav` by default.
 
+### Higgs v2 static cache workaround (minimal patch)
+
+If Higgs v2 crashes with a static KV-cache shape error during local TTS, apply this minimal patch
+inside `higgs-audio/boson_multimodal/serve/serve_engine.py` to disable static caches and CUDA graph
+capture for now:
+
+```diff
+@@
+-        # A list of KV caches for different lengths
+-        self.kv_caches = {
+-            length: StaticCache(
+-                config=cache_config,
+-                max_batch_size=1,
+-                max_cache_len=length,
+-                device=self.model.device,
+-                dtype=self.model.dtype,
+-            )
+-            for length in sorted(kv_cache_lengths)
+-        }
++        # Disable KV caches (workaround for static cache bugs)
++        self.kv_caches = {}
+@@
+-        if device == "cuda":
+-            logger.info(f"Capturing CUDA graphs for each KV cache length")
+-            self.model.capture_model(self.kv_caches.values())
++        if device == "cuda" and self.kv_caches:
++            logger.info(f"Capturing CUDA graphs for each KV cache length")
++            self.model.capture_model(self.kv_caches.values())
+@@
+-    def _prepare_kv_caches(self):
+-        for kv_cache in self.kv_caches.values():
+-            kv_cache.reset()
++    def _prepare_kv_caches(self):
++        if not self.kv_caches:
++            return
++        for kv_cache in self.kv_caches.values():
++            kv_cache.reset()
+@@
+-                use_cache=True,
++                use_cache=False,
+@@
+-                past_key_values_buckets=self.kv_caches,
++                past_key_values_buckets=self.kv_caches or None,
+```
+
 Generate images per chunk with ComfyUI (Flux workflow):
 
 ```bash
