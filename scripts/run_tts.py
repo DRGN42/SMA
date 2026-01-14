@@ -17,13 +17,17 @@ DEFAULT_ENDPOINT = "http://localhost:8002/v1/tts"
 
 @dataclass(frozen=True)
 class TTSConfig:
+    mode: str
     endpoint: str
     voice: str
     audio_format: str
     sample_rate: int
+    model_path: str
+    tokenizer_path: str
+    device: str
 
 
-def request_tts(text: str, config: TTSConfig) -> bytes:
+def request_tts_http(text: str, config: TTSConfig) -> bytes:
     payload = {
         "text": text,
         "voice": config.voice,
@@ -44,6 +48,49 @@ def request_tts(text: str, config: TTSConfig) -> bytes:
     return response.content
 
 
+def request_tts_local(text: str, config: TTSConfig) -> tuple["torch.Tensor", int]:
+    import torch
+    import torchaudio
+
+    from boson_multimodal.data_types import ChatMLSample, Message
+    from boson_multimodal.serve.serve_engine import HiggsAudioServeEngine
+
+    system_prompt = (
+        "Generate audio following instruction.\n\n"
+        "<|scene_desc_start|>\n"
+        "Audio is recorded from a quiet room.\n"
+        "<|scene_desc_end|>"
+    )
+
+    messages = [
+        Message(role="system", content=system_prompt),
+        Message(role="user", content=text),
+    ]
+
+    serve_engine = HiggsAudioServeEngine(
+        config.model_path,
+        config.tokenizer_path,
+        device=config.device,
+    )
+
+    output = serve_engine.generate(
+        chat_ml_sample=ChatMLSample(messages=messages),
+        max_new_tokens=1024,
+        temperature=0.3,
+        top_p=0.95,
+        top_k=50,
+        stop_strings=["<|end_of_text|>", "<|eot_id|>"],
+    )
+
+    audio_tensor = torch.from_numpy(output.audio)[None, :]
+    audio_tensor = torchaudio.functional.resample(
+        audio_tensor,
+        output.sampling_rate,
+        config.sample_rate,
+    )
+    return audio_tensor, config.sample_rate
+
+
 def build_manifest(
     source_json: Path,
     output_dir: Path,
@@ -53,9 +100,13 @@ def build_manifest(
     return {
         "source_json": source_json.name,
         "output_dir": str(output_dir),
+        "mode": config.mode,
         "voice": config.voice,
         "format": config.audio_format,
         "sample_rate": config.sample_rate,
+        "model_path": config.model_path,
+        "tokenizer_path": config.tokenizer_path,
+        "device": config.device,
         "audio_files": audio_files,
     }
 
@@ -69,6 +120,12 @@ def parse_args() -> argparse.Namespace:
         "--endpoint",
         default=os.environ.get("TTS_ENDPOINT", DEFAULT_ENDPOINT),
         help="TTS HTTP endpoint",
+    )
+    parser.add_argument(
+        "--mode",
+        default=os.environ.get("TTS_MODE", "http"),
+        choices=["http", "local"],
+        help="TTS mode: http (endpoint) or local (Higgs v2 engine)",
     )
     parser.add_argument(
         "--voice",
@@ -92,6 +149,21 @@ def parse_args() -> argparse.Namespace:
         help="Directory for audio outputs",
     )
     parser.add_argument(
+        "--model-path",
+        default=os.environ.get("HIGGS_MODEL", "bosonai/higgs-audio-v2-generation-3B-base"),
+        help="Higgs v2 model path for local mode",
+    )
+    parser.add_argument(
+        "--tokenizer-path",
+        default=os.environ.get("HIGGS_TOKENIZER", "bosonai/higgs-audio-v2-tokenizer"),
+        help="Higgs v2 tokenizer path for local mode",
+    )
+    parser.add_argument(
+        "--device",
+        default=os.environ.get("HIGGS_DEVICE", "cuda"),
+        help="Device for local mode (cuda or cpu)",
+    )
+    parser.add_argument(
         "--output",
         help="Optional manifest JSON path",
     )
@@ -108,10 +180,14 @@ def main() -> None:
     chunks = chunked.get("chunks", [])
 
     config = TTSConfig(
+        mode=args.mode,
         endpoint=args.endpoint,
         voice=args.voice,
         audio_format=args.format,
         sample_rate=args.sample_rate,
+        model_path=args.model_path,
+        tokenizer_path=args.tokenizer_path,
+        device=args.device,
     )
 
     audio_files: list[dict[str, Any]] = []
@@ -121,10 +197,16 @@ def main() -> None:
         text = chunk.get("text", "")
         if not text:
             continue
-        audio_bytes = request_tts(text, config)
         filename = f"{stem}__chunk{int(index):03d}.{config.audio_format}"
         audio_path = output_dir / filename
-        audio_path.write_bytes(audio_bytes)
+        if config.mode == "local":
+            import torchaudio
+
+            audio_tensor, sample_rate = request_tts_local(text, config)
+            torchaudio.save(str(audio_path), audio_tensor, sample_rate)
+        else:
+            audio_bytes = request_tts_http(text, config)
+            audio_path.write_bytes(audio_bytes)
         audio_files.append(
             {
                 "index": index,
