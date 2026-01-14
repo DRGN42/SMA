@@ -32,6 +32,12 @@ Build an LLM prompt payload for atmosphere + per-chunk image prompts:
 python scripts/build_llm_payload.py data/raw/<file>.chunked.json
 ```
 
+Run the LLM request (OpenAI-compatible endpoint):
+
+```bash
+python scripts/run_llm.py data/raw/<file>.llm.json --endpoint http://localhost:8000/v1/chat/completions --model openai/gpt-oss-20b
+```
+
 ## Project structure
 
 ```
@@ -44,4 +50,4 @@ python scripts/build_llm_payload.py data/raw/<file>.chunked.json
 
 ## Next module
 
-The next module will call the LLM with the payload and store the structured response.
+The next module will parse the LLM response into a structured JSON for image + TTS generation.
