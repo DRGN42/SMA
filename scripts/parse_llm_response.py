@@ -43,10 +43,14 @@ def extract_json(content: str) -> dict[str, Any] | None:
 
 def parse_llm_response(response_json: dict[str, Any]) -> ParsedLLMResponse:
     message = response_json.get("message", "")
+    if not message and isinstance(response_json.get("response"), dict):
+        choices = response_json["response"].get("choices", [])
+        if choices:
+            message = choices[0].get("message", {}).get("content", "")
     parsed = extract_json(message)
 
     if parsed is None:
-        raise ValueError("LLM response did not include valid JSON output")
+        return ParsedLLMResponse(atmosphere={}, chunk_prompts=[])
 
     atmosphere = parsed.get("atmosphere", {})
     chunk_prompts = parsed.get("chunk_prompts", [])
@@ -76,6 +80,7 @@ def main() -> None:
     output_payload = {
         "atmosphere": parsed.atmosphere,
         "chunk_prompts": parsed.chunk_prompts,
+        "raw_message": response.get("message", ""),
     }
     output_path.write_text(json.dumps(output_payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
