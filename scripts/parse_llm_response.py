@@ -13,6 +13,7 @@ from typing import Any
 class ParsedLLMResponse:
     atmosphere: dict[str, Any]
     chunk_prompts: list[dict[str, Any]]
+    raw_message: str
 
 
 def extract_json(content: str) -> dict[str, Any] | None:
@@ -41,21 +42,34 @@ def extract_json(content: str) -> dict[str, Any] | None:
     return None
 
 
+def strip_message_wrappers(content: str) -> str:
+    tokens = ["<|message|>", "<|channel|>", "<|constrain|>", "<|final|>", "<|assistant|>"]
+    for token in tokens:
+        if token in content:
+            content = content.replace(token, " ")
+    return content.strip()
+
+
 def parse_llm_response(response_json: dict[str, Any]) -> ParsedLLMResponse:
     message = response_json.get("message", "")
     if not message and isinstance(response_json.get("response"), dict):
         choices = response_json["response"].get("choices", [])
         if choices:
             message = choices[0].get("message", {}).get("content", "")
-    parsed = extract_json(message)
+    cleaned = strip_message_wrappers(message)
+    parsed = extract_json(cleaned)
 
     if parsed is None:
-        return ParsedLLMResponse(atmosphere={}, chunk_prompts=[])
+        return ParsedLLMResponse(atmosphere={}, chunk_prompts=[], raw_message=message)
 
     atmosphere = parsed.get("atmosphere", {})
     chunk_prompts = parsed.get("chunk_prompts", [])
 
-    return ParsedLLMResponse(atmosphere=atmosphere, chunk_prompts=chunk_prompts)
+    return ParsedLLMResponse(
+        atmosphere=atmosphere,
+        chunk_prompts=chunk_prompts,
+        raw_message=message,
+    )
 
 
 def parse_args() -> argparse.Namespace:
@@ -80,7 +94,7 @@ def main() -> None:
     output_payload = {
         "atmosphere": parsed.atmosphere,
         "chunk_prompts": parsed.chunk_prompts,
-        "raw_message": response.get("message", ""),
+        "raw_message": parsed.raw_message,
     }
     output_path.write_text(json.dumps(output_payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
