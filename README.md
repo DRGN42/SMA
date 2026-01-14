@@ -14,6 +14,12 @@ Fetch a random poem page and store the raw HTML + metadata:
 python scripts/scrape_poem.py --output-dir data/raw
 ```
 
+Parse a single HTML file into normalized JSON:
+
+```bash
+python scripts/parse_poem.py data/raw/<file>.html
+```
+
 ## Project structure
 
 ```
@@ -26,4 +32,4 @@ python scripts/scrape_poem.py --output-dir data/raw
 
 ## Next module
 
-The next module will parse the raw HTML into a normalized JSON schema (author, title, poem text).
+The next module will chunk poem lines for TTS + image prompt generation.
