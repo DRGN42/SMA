@@ -10,28 +10,6 @@ from core.models import Chunk, ChunkVisualPrompt, GlobalVisualBible, Poem
 from providers.base import LLMProvider
 
 
-class _GlobalBibleResponse(BaseModel):
-    overall_mood: str
-    themes: List[str]
-    setting: str
-    era: str
-    visual_style: str
-    color_palette: List[str]
-    camera: str
-    symbols: List[str]
-    negative_prompt: str
-    social_style: str
-    pacing: str
-
-
-class _ChunkPromptResponse(BaseModel):
-    index: int
-    image_prompt: str
-    negative_prompt: str
-    recommended_motion: str
-    on_screen_text: str
-
-
 class LMStudioProvider(LLMProvider):
     def __init__(self, base_url: str, model: str, timeout_s: int = 60):
         self.base_url = base_url.rstrip("/")
@@ -65,7 +43,7 @@ class LMStudioProvider(LLMProvider):
         }
         response_json = self._post_chat(payload)
         return self._parse_json_response(
-            response_json, _GlobalBibleResponse, normalize=_normalize_global_bible
+            response_json, GlobalVisualBible, normalize=_normalize_global_bible
         )
 
     def generate_chunk_prompts(
@@ -100,18 +78,10 @@ class LMStudioProvider(LLMProvider):
             response_json = self._post_chat(payload)
             prompt = self._parse_json_response(
                 response_json,
-                _ChunkPromptResponse,
+                ChunkVisualPrompt,
                 normalize=lambda data: _normalize_chunk_prompt(data, chunk.index),
             )
-            prompts.append(
-                ChunkVisualPrompt(
-                    index=prompt.index,
-                    image_prompt=prompt.image_prompt,
-                    negative_prompt=prompt.negative_prompt,
-                    recommended_motion=prompt.recommended_motion,
-                    on_screen_text=prompt.on_screen_text,
-                )
-            )
+            prompts.append(prompt)
         return prompts
 
     def _post_chat(self, payload: dict) -> dict:
@@ -149,6 +119,7 @@ class LMStudioProvider(LLMProvider):
 def _strip_code_fences(content: str) -> str:
     stripped = content.strip()
     stripped = _strip_chat_tokens(stripped)
+    stripped = _extract_json_block(stripped)
     if stripped.startswith("```"):
         stripped = stripped.lstrip("`")
         if stripped.lower().startswith("json"):
@@ -165,6 +136,19 @@ def _strip_chat_tokens(content: str) -> str:
     if "<|" in cleaned and "|>" in cleaned:
         cleaned = cleaned.replace("<|", "").replace("|>", "")
     return cleaned.strip()
+
+
+def _extract_json_block(content: str) -> str:
+    start = min(
+        (idx for idx in (content.find("{"), content.find("[")) if idx != -1),
+        default=-1,
+    )
+    if start == -1:
+        return content
+    end = max(content.rfind("}"), content.rfind("]"))
+    if end == -1:
+        return content[start:]
+    return content[start : end + 1].strip()
 
 
 def _normalize_list(value) -> List[str]:
