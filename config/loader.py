@@ -22,6 +22,11 @@ def load_config(path: str) -> AppConfig:
             "provider": os.getenv("TTS_PROVIDER"),
             "voice_id": os.getenv("TTS_VOICE_ID"),
             "higgs_url": os.getenv("TTS_HIGGS_URL"),
+            "higgs_mode": os.getenv("TTS_HIGGS_MODE"),
+            "higgs_command": os.getenv("TTS_HIGGS_COMMAND"),
+            "voice_wav_path": os.getenv("TTS_VOICE_WAV_PATH"),
+            "voice_text_path": os.getenv("TTS_VOICE_TEXT_PATH"),
+            "higgs_endpoint": os.getenv("TTS_HIGGS_ENDPOINT"),
         },
         "t2i": {
             "provider": os.getenv("T2I_PROVIDER"),

@@ -14,6 +14,14 @@ class TTSConfig(BaseModel):
     voice_id: str = "poemvoice"
     speed: float = 1.0
     higgs_url: str = "http://localhost:8000"
+    higgs_mode: str = "cli"
+    higgs_command: str = (
+        "higgs_tts --text-file {text_path} --voice-wav {voice_wav} "
+        "--voice-text {voice_text} --output {output_path} --speed {speed}"
+    )
+    voice_wav_path: str = "assets/voice/poemvoice.wav"
+    voice_text_path: str = "assets/voice/poemvoice.txt"
+    higgs_endpoint: str = "/synthesize"
 
 
 class T2IConfig(BaseModel):

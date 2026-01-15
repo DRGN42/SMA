@@ -14,7 +14,7 @@ from providers.content.hor_de import HorDePoemSource
 from providers.llm.lmstudio import LMStudioProvider
 from providers.storage.json_store import JsonURLStore
 from providers.tts.dummy import DummyTTS
-from providers.tts.higgs_stub import HiggsTTS
+from providers.tts.higgs import HiggsTTS
 from providers.t2i.dummy import DummyT2I
 from providers.animation.simple import PassthroughAnimation
 from providers.video.ffmpeg_composer import FFMPEGComposer
@@ -26,7 +26,15 @@ def build_pipeline(config: AppConfig):
     if config.tts.provider == "dummy":
         tts = DummyTTS()
     elif config.tts.provider == "higgs":
-        tts = HiggsTTS(config.tts.higgs_url, config.tts.voice_id)
+        tts = HiggsTTS(
+            service_url=config.tts.higgs_url,
+            voice_id=config.tts.voice_id,
+            mode=config.tts.higgs_mode,
+            command_template=config.tts.higgs_command,
+            voice_wav_path=config.tts.voice_wav_path,
+            voice_text_path=config.tts.voice_text_path,
+            endpoint=config.tts.higgs_endpoint,
+        )
     else:
         raise ValueError(f"Unsupported TTS provider: {config.tts.provider}")
     if config.t2i.provider == "dummy":
