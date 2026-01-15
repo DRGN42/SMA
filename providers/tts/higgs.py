@@ -7,6 +7,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 from typing import Optional
+import shutil
 
 import requests
 
@@ -64,6 +65,12 @@ class HiggsTTS(TTSProvider):
                 }
             )
             args = shlex.split(command, posix=os.name != "nt")
+            executable = args[0] if args else ""
+            if executable and not (Path(executable).exists() or shutil.which(executable)):
+                raise FileNotFoundError(
+                    f"Higgs CLI not found: {executable}. "
+                    "Provide a full path in higgs_command or add it to PATH."
+                )
             subprocess.run(args, check=True)
         finally:
             try:
