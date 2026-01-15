@@ -103,6 +103,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
 
 > Hinweis: Wenn das Higgs-Repo keine `pyproject.toml`/`setup.py` enthält, bricht das Script ab und du folgst den Build-Anweisungen des Higgs-Repos.
+> Hinweis: Das Higgs-Installationsscript legt eine separate Umgebung `.venv-higgs` an. Für das Bot-Projekt nutze weiterhin deine Projekt-venv (`.venv`) mit `pip install -r requirements.txt`, sonst fehlen Abhängigkeiten wie `bs4`. 
 
 ### Option A: CLI Integration (empfohlen)
 1. Stelle sicher, dass dein Higgs CLI ausführbar ist (z. B. `higgs_tts` im PATH).
