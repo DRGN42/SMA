@@ -148,6 +148,7 @@ class LMStudioProvider(LLMProvider):
 
 def _strip_code_fences(content: str) -> str:
     stripped = content.strip()
+    stripped = _strip_chat_tokens(stripped)
     if stripped.startswith("```"):
         stripped = stripped.lstrip("`")
         if stripped.lower().startswith("json"):
@@ -156,6 +157,14 @@ def _strip_code_fences(content: str) -> str:
         if stripped.endswith("```"):
             stripped = stripped[: -3].strip()
     return stripped
+
+
+def _strip_chat_tokens(content: str) -> str:
+    cleaned = content.replace("<|channel|>", "").replace("<|constrain|>", "").replace("<|message|>", "")
+    cleaned = cleaned.replace("<|final|>", "").replace("<|assistant|>", "")
+    if "<|" in cleaned and "|>" in cleaned:
+        cleaned = cleaned.replace("<|", "").replace("|>", "")
+    return cleaned.strip()
 
 
 def _normalize_list(value) -> List[str]:
