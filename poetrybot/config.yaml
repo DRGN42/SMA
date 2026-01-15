@@ -1,0 +1,60 @@
+# Poetry Bot Pipeline Configuration
+# ===================================
+
+scraper:
+  source: "hor.de"
+  base_url: "https://hor.de/gedichte/gedicht.php"
+  timeout: 30
+
+schedule:
+  timezone: "Europe/Berlin"
+  runs:
+    - "08:00"
+    - "13:00"
+    - "19:00"
+
+chunker:
+  strategy: "line"
+  max_chars: 100
+
+llm:
+  provider: "lm_studio"
+  base_url: "http://192.168.178.54:1234/v1"
+  model: "local-model"
+  temperature: 0.7
+  max_tokens: 2000
+
+tts:
+  provider: "edge_tts"
+  voice: "de-DE-ConradNeural"
+  voice_sample: "assets/voice/poemvoice.wav"
+
+t2i:
+  provider: "sdxl_turbo"
+  model_id: "stabilityai/sdxl-turbo"
+  resolution:
+    width: 1080
+    height: 1920
+  steps: 4
+  guidance_scale: 0.0
+  device: "cuda"
+
+video:
+  fps: 30
+  codec: "libx264"
+  crf: 23
+  preset: "medium"
+  music_dir: "assets/ambient"
+  music_volume: 0.15
+
+output:
+  base_dir: "outputs"
+  cleanup_work: true
+
+dedup:
+  enabled: true
+  database: "processed_urls.json"
+
+logging:
+  level: "INFO"
+  file: "logs/pipeline.log"

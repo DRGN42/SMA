@@ -1,0 +1,36 @@
+# Poetry Bot Pipeline - Docker Compose
+version: '3.8'
+
+services:
+  poetry-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: poetry-bot
+    restart: unless-stopped
+    
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - CUDA_VISIBLE_DEVICES=0
+      - TZ=Europe/Berlin
+    
+    volumes:
+      - ./outputs:/app/outputs
+      - ./assets:/app/assets
+      - ./logs:/app/logs
+      - ./config.yaml:/app/config.yaml:ro
+      - huggingface_cache:/root/.cache/huggingface
+    
+    ports:
+      - "8000:8000"
+
+volumes:
+  huggingface_cache:
