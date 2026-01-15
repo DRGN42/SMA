@@ -97,7 +97,9 @@ export HIGGS_REPO_URL=<DEIN_HIGGS_REPO_URL>
 **Windows PowerShell**
 ```powershell
 setx HIGGS_REPO_URL "<DEIN_HIGGS_REPO_URL>"
-./scripts/install_higgs.ps1
+# neues Terminal öffnen, damit die Variable verfügbar ist
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\scripts\install_higgs.ps1
 ```
 
 > Hinweis: Wenn das Higgs-Repo keine `pyproject.toml`/`setup.py` enthält, bricht das Script ab und du folgst den Build-Anweisungen des Higgs-Repos.
