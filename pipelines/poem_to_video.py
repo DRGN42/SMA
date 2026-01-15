@@ -129,7 +129,9 @@ def _prepare_output_dir(root_dir: str) -> Path:
 
 
 def _write_json(path: Path, payload: dict) -> None:
-    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False, default=str), encoding="utf-8"
+    )
 
 
 def _write_srt(path: Path, chunks: List[Chunk]) -> None:
