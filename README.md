@@ -116,6 +116,11 @@ tts:
   voice_wav_path: "assets/voice/poemvoice.wav"
   voice_text_path: "assets/voice/poemvoice.txt"
 ```
+Falls dein CLI nicht im PATH ist, nutze einen absoluten Pfad, z. B.:
+```yaml
+tts:
+  higgs_command: "C:/Tools/Higgs/higgs_tts.exe --text-file {text_path} --voice-wav {voice_wav} --voice-text {voice_text} --output {output_path} --speed {speed}"
+```
 3. Run wie gewohnt:
 ```bash
 python cli.py run-once --config config/config.yaml
