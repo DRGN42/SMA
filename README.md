@@ -121,6 +121,12 @@ Falls dein CLI nicht im PATH ist, nutze einen absoluten Pfad, z. B.:
 tts:
   higgs_command: "C:/Tools/Higgs/higgs_tts.exe --text-file {text_path} --voice-wav {voice_wav} --voice-text {voice_text} --output {output_path} --speed {speed}"
 ```
+Wenn es kein `higgs_tts.exe` gibt, läuft der CLI oft als Python-Entry-Point. Dann kannst du z. B. so starten:
+```yaml
+tts:
+  higgs_command: "python -m higgs_tts --text-file {text_path} --voice-wav {voice_wav} --voice-text {voice_text} --output {output_path} --speed {speed}"
+```
+Alternativ: falls das Higgs-Repo ein Skript unter `scripts/` oder `tools/` hat, trage den Pfad direkt ein.
 3. Run wie gewohnt:
 ```bash
 python cli.py run-once --config config/config.yaml
