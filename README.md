@@ -85,6 +85,23 @@ outputs/YYYY-MM-DD/run_<timestamp>/
 
 ## Higgs Audio v2 Setup (TTS)
 
+### 0) Higgs herunterladen & installieren (Teil dieses Projekts)
+Dieses Repo enthält Install-Skripte, die das Higgs-Repo klonen und als Python-Package installieren.
+
+**Linux/macOS**
+```bash
+export HIGGS_REPO_URL=<DEIN_HIGGS_REPO_URL>
+./scripts/install_higgs.sh
+```
+
+**Windows PowerShell**
+```powershell
+setx HIGGS_REPO_URL "<DEIN_HIGGS_REPO_URL>"
+./scripts/install_higgs.ps1
+```
+
+> Hinweis: Wenn das Higgs-Repo keine `pyproject.toml`/`setup.py` enthält, bricht das Script ab und du folgst den Build-Anweisungen des Higgs-Repos.
+
 ### Option A: CLI Integration (empfohlen)
 1. Stelle sicher, dass dein Higgs CLI ausführbar ist (z. B. `higgs_tts` im PATH).
 2. Setze in `config/config.yaml`:
