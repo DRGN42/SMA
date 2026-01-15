@@ -17,7 +17,7 @@ if (-not (Test-Path $HiggsDir)) {
 
 Set-Location $HiggsDir
 
-if (Test-Path "pyproject.toml" -or Test-Path "setup.py") {
+if ((Test-Path "pyproject.toml") -or (Test-Path "setup.py")) {
   if (-not (Test-Path $HiggsVenv)) {
     python -m venv $HiggsVenv
   }
